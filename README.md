@@ -154,3 +154,4 @@ supabase/
 scripts/
   init-supabase.ts                # DB initialization script
 ```
+deploytovercel
