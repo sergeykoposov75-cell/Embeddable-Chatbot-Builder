@@ -154,4 +154,5 @@ supabase/
 scripts/
   init-supabase.ts                # DB initialization script
 ```
-deploytovercel
+## Development
+Local: `npm run dev` — app runs on http://localhost:3000
