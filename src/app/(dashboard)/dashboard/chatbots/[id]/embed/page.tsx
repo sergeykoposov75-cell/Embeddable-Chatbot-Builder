@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { EmbedSettings } from "./EmbedSettings";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function EmbedPage({ params }: Props) {
-  const supabase = createClient();
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) redirect("/login");
@@ -16,7 +17,7 @@ export default async function EmbedPage({ params }: Props) {
   const { data: chatbot } = await supabase
     .from("chatbots")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", session.user.id)
     .single();
 

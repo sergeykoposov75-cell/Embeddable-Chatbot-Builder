@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Plus, MessageSquare, Code2 } from "lucide-react";
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) redirect("/login");

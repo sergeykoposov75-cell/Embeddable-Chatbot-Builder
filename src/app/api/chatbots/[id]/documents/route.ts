@@ -3,10 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+    const { id } = await params;
+    const supabase = await createClient();
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -23,7 +24,7 @@ export async function PUT(
     const { data: bot } = await supabase
       .from("chatbots")
       .select("id")
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("user_id", session.user.id)
       .maybeSingle();
 
@@ -52,7 +53,7 @@ export async function PUT(
     const { error: deleteError } = await supabase
       .from("chatbot_documents")
       .delete()
-      .eq("chatbot_id", params.id);
+      .eq("chatbot_id", id);
 
     if (deleteError) {
       return NextResponse.json({ error: deleteError.message }, { status: 500 });
@@ -63,7 +64,7 @@ export async function PUT(
         .from("chatbot_documents")
         .insert(
           uniqueIds.map((documentId) => ({
-            chatbot_id: params.id,
+            chatbot_id: id,
             document_id: documentId,
           }))
         );

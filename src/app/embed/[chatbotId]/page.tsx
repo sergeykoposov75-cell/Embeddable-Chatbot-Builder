@@ -3,15 +3,16 @@ import { notFound } from "next/navigation";
 import { EmbedWidget } from "./EmbedWidget";
 
 interface Props {
-  params: { chatbotId: string };
+  params: Promise<{ chatbotId: string }>;
 }
 
 export default async function EmbedPage({ params }: Props) {
-  const supabase = createClient();
+  const { chatbotId } = await params;
+  const supabase = await createClient();
   const { data: chatbot } = await supabase
     .from("chatbots")
     .select("id, name")
-    .eq("id", params.chatbotId)
+    .eq("id", chatbotId)
     .eq("is_published", true)
     .single();
 

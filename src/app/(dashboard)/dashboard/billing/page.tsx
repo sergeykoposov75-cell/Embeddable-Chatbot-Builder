@@ -6,18 +6,19 @@ import { redirect } from "next/navigation";
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams?: { success?: string; canceled?: string; session_id?: string };
+  searchParams?: Promise<{ success?: string; canceled?: string; session_id?: string }>;
 }) {
-  const supabase = createClient();
+  const sp = (await searchParams) ?? {};
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) redirect("/login");
 
   let notice: { type: "success" | "error"; text: string } | null = null;
 
-  if (searchParams?.success === "true" && searchParams.session_id) {
+  if (sp.success === "true" && sp.session_id) {
     try {
-      const checkoutSession = await stripe.checkout.sessions.retrieve(searchParams.session_id);
+      const checkoutSession = await stripe.checkout.sessions.retrieve(sp.session_id);
       if (
         checkoutSession.payment_status === "paid" &&
         checkoutSession.client_reference_id === session.user.id
@@ -43,9 +44,9 @@ export default async function BillingPage({
     } catch {
       notice = { type: "error", text: "Could not verify payment." };
     }
-  } else if (searchParams?.success === "true") {
+  } else if (sp.success === "true") {
     notice = { type: "success", text: "Subscription updated." };
-  } else if (searchParams?.canceled === "true") {
+  } else if (sp.canceled === "true") {
     notice = { type: "error", text: "Checkout was canceled." };
   }
 

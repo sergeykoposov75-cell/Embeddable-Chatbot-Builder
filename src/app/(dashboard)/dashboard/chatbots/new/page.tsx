@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { CreateChatbotForm } from "./CreateChatbotForm";
 
 export default async function NewChatbotPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) redirect("/login");

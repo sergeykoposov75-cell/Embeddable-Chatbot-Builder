@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL("/?error=invalid-plan", req.url));
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {

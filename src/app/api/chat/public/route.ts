@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "MISTRAL_API_KEY not configured" }, { status: 500 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: chatbot } = await supabase
       .from("chatbots")

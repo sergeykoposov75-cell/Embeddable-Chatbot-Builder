@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing file or userId" }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: sub } = await supabase
     .from("subscriptions")
@@ -125,7 +125,13 @@ export async function POST(req: NextRequest) {
 
     if (!text.trim()) {
       await supabase.from("documents").update({ status: "error" }).eq("id", doc.id);
-      return NextResponse.json({ error: "No text could be extracted from the file" }, { status: 400 });
+      const name = file.name.toLowerCase();
+      const message = name.endsWith(".pdf")
+        ? "This PDF appears to be a scan or image-only — it has no text layer to extract. Upload a text-based PDF (exported from Word/browser) or use DOCX/TXT instead."
+        : name.endsWith(".docx")
+          ? "No text could be extracted from this DOCX. The file may be corrupt or protected."
+          : "No text could be extracted from this file.";
+      return NextResponse.json({ error: message }, { status: 400 });
     }
 
     const chunks = splitText(text, CHUNK_SIZE, CHUNK_OVERLAP);

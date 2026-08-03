@@ -4,6 +4,9 @@ ALTER TABLE public.subscriptions
   ADD COLUMN IF NOT EXISTS period_start TIMESTAMPTZ;
 
 -- One subscription row per user (also fixes duplicate upserts)
+-- DROP+ADD so re-runs don't fail with 'relation subscriptions_user_id_key already exists'
+ALTER TABLE public.subscriptions
+  DROP CONSTRAINT IF EXISTS subscriptions_user_id_key;
 ALTER TABLE public.subscriptions
   ADD CONSTRAINT subscriptions_user_id_key UNIQUE (user_id);
 
