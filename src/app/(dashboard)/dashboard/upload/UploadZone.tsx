@@ -3,7 +3,8 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB — free Supabase storage limit
 
 interface UploadZoneProps {
   userId: string;
@@ -25,6 +26,11 @@ export function UploadZone({ userId }: UploadZoneProps) {
     setErrorMsg(null);
 
     try {
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        throw new Error(`File is ${sizeMB} MB. Maximum allowed size is 50 MB.`);
+      }
+
       const initRes = await fetch("/api/upload/init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -34,15 +40,22 @@ export function UploadZone({ userId }: UploadZoneProps) {
         const data = await initRes.json().catch(() => ({}));
         throw new Error(data.error || "Upload failed");
       }
-      const { documentId, uploadPath } = await initRes.json();
+      const { documentId, signedUrl } = await initRes.json();
 
-      const supabase = createClient();
-      const { error: storageError } = await supabase.storage
-        .from("documents")
-        .upload(uploadPath, file, { upsert: true });
-
-      if (storageError) {
-        throw new Error(`Storage upload failed: ${storageError.message}`);
+      const putRes = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!putRes.ok) {
+        let detail = "";
+        try {
+          const body = await putRes.json();
+          detail = body?.message || body?.error || "";
+        } catch {
+          /* ignore */
+        }
+        throw new Error(detail || `Storage upload failed (HTTP ${putRes.status}). Check the 50 MB upload limit.`);
       }
 
       const processRes = await fetch("/api/upload/process", {
@@ -120,6 +133,14 @@ export function UploadZone({ userId }: UploadZoneProps) {
     </div>
   );
 }
+
+    
+      
+        
+      
+        
+            
+
 
     
    
