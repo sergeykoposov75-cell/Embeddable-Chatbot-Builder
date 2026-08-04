@@ -54,6 +54,8 @@ async function getEmbeddings(texts: string[], apiKey: string): Promise<number[][
   return allEmbeddings;
 }
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
