@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = req.nextUrl.origin;
 
     // Real Stripe mode — only if a price ID is configured
     if (planConfig.priceId) {
