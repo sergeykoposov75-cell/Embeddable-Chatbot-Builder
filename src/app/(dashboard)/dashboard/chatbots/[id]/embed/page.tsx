@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { EmbedSettings } from "./EmbedSettings";
 
 interface Props {
@@ -23,7 +24,11 @@ export default async function EmbedPage({ params }: Props) {
 
   if (!chatbot) return notFound();
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const h = await headers();
+  const host = h.get("x-forwarded-host") || h.get("host") || "localhost:3000";
+  const proto = h.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const baseUrl = envUrl || `${proto}://${host}`;
 
   return (
     <div className="p-6 max-w-2xl">
@@ -41,3 +46,5 @@ export default async function EmbedPage({ params }: Props) {
     </div>
   );
 }
+  
+
