@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface UploadZoneProps {
   userId: string;
@@ -21,17 +22,39 @@ export function UploadZone({ userId }: UploadZoneProps) {
     setFileName(file.name);
     setUploading(true);
     setStatus("uploading");
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("userId", userId);
+    setErrorMsg(null);
 
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+      const initRes = await fetch("/api/upload/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name }),
+      });
+      if (!initRes.ok) {
+        const data = await initRes.json().catch(() => ({}));
         throw new Error(data.error || "Upload failed");
       }
+      const { documentId, uploadPath } = await initRes.json();
+
+      const supabase = createClient();
+      const { error: storageError } = await supabase.storage
+        .from("documents")
+        .upload(uploadPath, file, { upsert: true });
+
+      if (storageError) {
+        throw new Error(`Storage upload failed: ${storageError.message}`);
+      }
+
+      const processRes = await fetch("/api/upload/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+      if (!processRes.ok) {
+        const data = await processRes.json().catch(() => ({}));
+        throw new Error(data.error || "Upload failed");
+      }
+
       setStatus("success");
     } catch (e) {
       setStatus("error");
@@ -97,3 +120,9 @@ export function UploadZone({ userId }: UploadZoneProps) {
     </div>
   );
 }
+
+    
+   
+        
+          
+           
