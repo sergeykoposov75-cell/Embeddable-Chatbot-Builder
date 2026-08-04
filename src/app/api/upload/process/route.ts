@@ -102,6 +102,14 @@ export async function POST(req: NextRequest) {
   const safeName = (doc.name as string).replace(/[^\w.\-]/g, "_");
   const filePath = `${userId}/${documentId}/${safeName}`;
 
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    await supabase.from("documents").update({ status: "error" }).eq("id", documentId);
+    return NextResponse.json(
+      { error: "SUPABASE_SERVICE_ROLE_KEY is not configured in Vercel — add it in Project Settings → Environment Variables." },
+      { status: 500 }
+    );
+  }
+
   const admin = adminClient();
   const { data: fileBlob, error: downloadError } = await admin.storage
     .from("documents")
@@ -171,3 +179,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+
+
+        
+
+  
+   
+    
+
+  
+          
+
+    
+
+    
+    
+  
