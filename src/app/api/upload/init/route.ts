@@ -59,9 +59,24 @@ export async function POST(req: NextRequest) {
     const safeName = fileName.replace(/[^\w.\-]/g, "_");
     const uploadPath = `${userId}/${doc.id}/${safeName}`;
 
-    return NextResponse.json({ documentId: doc.id, uploadPath });
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from("documents")
+      .createSignedUploadUrl(uploadPath);
+
+    if (signedError || !signedData?.signedUrl) {
+      await supabase.from("documents").update({ status: "error" }).eq("id", doc.id);
+      return NextResponse.json(
+        { error: `Signed URL creation failed: ${signedError?.message ?? "unknown"}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ documentId: doc.id, signedUrl: signedData.signedUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Init failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+    
+      
